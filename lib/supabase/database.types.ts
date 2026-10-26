@@ -10,9 +10,9 @@ export type Database = {
         Relationships: [];
       };
       reports: {
-        Row: { id: string; title: string; activity_date: string; location: string; summary: string; body: string; cover_path: string | null; status: 'draft' | 'published'; published_at: string | null; created_at: string; updated_at: string };
-        Insert: { id?: string; title: string; activity_date: string; location?: string; summary?: string; body?: string; cover_path?: string | null; status?: 'draft' | 'published'; published_at?: string | null; created_at?: string; updated_at?: string };
-        Update: { id?: string; title?: string; activity_date?: string; location?: string; summary?: string; body?: string; cover_path?: string | null; status?: 'draft' | 'published'; published_at?: string | null; created_at?: string; updated_at?: string };
+        Row: { id: string; title: string; activity_date: string; location: string; summary: string; body: string; cover_path: string | null; cover_asset_path: string | null; status: 'draft' | 'published'; published_at: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; title: string; activity_date: string; location?: string; summary?: string; body?: string; cover_path?: string | null; cover_asset_path?: string | null; status?: 'draft' | 'published'; published_at?: string | null; created_at?: string; updated_at?: string };
+        Update: { id?: string; title?: string; activity_date?: string; location?: string; summary?: string; body?: string; cover_path?: string | null; cover_asset_path?: string | null; status?: 'draft' | 'published'; published_at?: string | null; created_at?: string; updated_at?: string };
         Relationships: [];
       };
       report_media: {
@@ -22,10 +22,16 @@ export type Database = {
         Relationships: [{ foreignKeyName: 'report_media_report_id_fkey'; columns: ['report_id']; isOneToOne: false; referencedRelation: 'reports'; referencedColumns: ['id'] }];
       };
       report_links: {
-        Row: { id: string; report_id: string; media_type: 'photos_album' | 'drive_video' | 'drive_document'; title: string; url: string; is_public: boolean; sort_order: number; created_at: string };
-        Insert: { id?: string; report_id: string; media_type: 'photos_album' | 'drive_video' | 'drive_document'; title: string; url: string; is_public?: boolean; sort_order?: number; created_at?: string };
-        Update: { id?: string; report_id?: string; media_type?: 'photos_album' | 'drive_video' | 'drive_document'; title?: string; url?: string; is_public?: boolean; sort_order?: number; created_at?: string };
+        Row: { id: string; report_id: string; media_type: 'photos_album' | 'drive_video' | 'youtube_video' | 'drive_document'; title: string; url: string; is_public: boolean; sort_order: number; created_at: string };
+        Insert: { id?: string; report_id: string; media_type: 'photos_album' | 'drive_video' | 'youtube_video' | 'drive_document'; title: string; url: string; is_public?: boolean; sort_order?: number; created_at?: string };
+        Update: { id?: string; report_id?: string; media_type?: 'photos_album' | 'drive_video' | 'youtube_video' | 'drive_document'; title?: string; url?: string; is_public?: boolean; sort_order?: number; created_at?: string };
         Relationships: [{ foreignKeyName: 'report_links_report_id_fkey'; columns: ['report_id']; isOneToOne: false; referencedRelation: 'reports'; referencedColumns: ['id'] }];
+      };
+      site_settings: {
+        Row: { id: string; settings: Json; updated_at: string };
+        Insert: { id?: string; settings?: Json; updated_at?: string };
+        Update: { id?: string; settings?: Json; updated_at?: string };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

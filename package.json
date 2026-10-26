@@ -12,12 +12,14 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:pdf": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/pdf.test.mjs tests/report-links.test.mjs"
+    "test:pdf": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/pdf.test.mjs tests/report-links.test.mjs",
+    "test:security-schema": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/schema-security.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.118.0",
     "next": "16.4.3",
+    "pdf-lib": "1.17.1",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

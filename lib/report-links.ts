@@ -1,4 +1,4 @@
-export const reportLinkTypes = ['photos_album', 'drive_video', 'drive_document'] as const;
+export const reportLinkTypes = ['photos_album', 'drive_video', 'youtube_video', 'drive_document'] as const;
 export type ReportLinkType = (typeof reportLinkTypes)[number];
 
 const allowedHosts = new Set([
@@ -6,6 +6,9 @@ const allowedHosts = new Set([
   'photos.app.goo.gl',
   'drive.google.com',
   'docs.google.com',
+  'youtube.com',
+  'www.youtube.com',
+  'youtu.be',
 ]);
 
 export function validateReportLink(value: string): URL | null {
@@ -27,6 +30,6 @@ export function validateReportLink(value: string): URL | null {
 
 export function reportLinkLabel(type: ReportLinkType) {
   if (type === 'photos_album') return 'Voir les photos';
-  if (type === 'drive_video') return 'Regarder la vidéo';
+  if (type === 'drive_video' || type === 'youtube_video') return 'Regarder la vidéo';
   return 'Consulter les documents';
 }

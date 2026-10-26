@@ -1,62 +1,46 @@
-# Site public et espace administrateur
+# Rapports d’activités — Diocèse des Jeunes RCC de Cotonou
 
-Socle Next.js et Supabase pour publier des rapports d’activités sans manipuler GitHub au quotidien. Aucun contenu de démonstration n’est embarqué.
+Site public responsive et espace de gestion sous Next.js, TypeScript et Supabase. Les pages publiques lisent uniquement les rapports publiés; aucun contenu de démonstration n’est inclus.
 
-## Configuration locale
+## Démarrage local
 
-1. Créez un projet Supabase et exécutez [`supabase/schema.sql`](supabase/schema.sql) dans son SQL Editor.
-2. Copiez `.env.example` vers `.env.local` et renseignez `NEXT_PUBLIC_SUPABASE_URL`, la clé publishable et `SUPABASE_SERVICE_ROLE_KEY`. La clé service role sert uniquement au nettoyage des médias lors d’une suppression, reste côté serveur et ne doit jamais porter le préfixe `NEXT_PUBLIC_`.
-3. Dans Supabase Auth, désactivez l’inscription publique. Créez le premier utilisateur depuis Auth > Users (invitation ou utilisateur créé par un opérateur de confiance), puis ajoutez son UUID à `public.admin_users` via SQL Editor:
+1. Utilisez Node.js 22.13+ et pnpm 11.25.0.
+2. Créez un projet Supabase et exécutez [`supabase/schema.sql`](supabase/schema.sql) dans le SQL Editor. Pour un projet existant, faites d’abord une sauvegarde et relisez le script : il ajoute les paramètres, les politiques et le bucket public réservé aux images d’identité, tout en conservant le bucket privé et les médias legacy. Cette livraison ne l’applique pas à votre instance.
+3. Copiez `.env.example` vers `.env.local` et renseignez les variables. `SUPABASE_SERVICE_ROLE_KEY` ne doit exister que côté serveur pour les opérations existantes qui le nécessitent; ne la préfixez jamais par `NEXT_PUBLIC_` et ne l’incluez jamais dans Git. La clé publishable et l’URL Supabase sont les seules valeurs Supabase utilisées dans le navigateur.
+4. Dans Supabase Auth, désactivez les inscriptions publiques. Créez le premier utilisateur depuis Auth > Users par une invitation ou par un opérateur de confiance, puis ajoutez son UUID dans `public.admin_users` depuis SQL Editor :
 
    ```sql
    insert into public.admin_users(user_id) values ('UUID_DE_L_UTILISATEUR');
    ```
 
-   N’accordez jamais la création du premier compte admin à un formulaire public. Gardez une procédure de récupération via le tableau de bord Supabase et retirez un administrateur en supprimant sa ligne `admin_users`.
-4. Installez Node.js 22.13 ou plus récent et pnpm 11.25.0, puis exécutez `pnpm install`, `pnpm typecheck`, `pnpm lint`, `pnpm test:pdf` et `pnpm dev`. Ouvrez `/admin/login`.
+   Aucun formulaire public ne crée de compte administrateur. Retirez un administrateur en supprimant sa ligne de `admin_users`.
+5. Exécutez `pnpm install`, puis `pnpm dev`. Le site est à `/`; la connexion admin est à `/admin/login`.
 
-## Utilisation et publication
+## Pages publiques et médias
 
-- Les visiteurs ne voient que les rapports avec `status = published`.
-- Dans `/admin`, créez/enregistrez d’abord le rapport. Les brouillons restent privés. Sélectionnez plusieurs fichiers depuis le sélecteur natif du navigateur; sur téléphone, celui-ci peut proposer galerie ou caméra selon l’appareil et le navigateur. L’interface affiche la progression, permet d’annuler un fichier et de relancer les échecs.
-- Pour les nouveaux médias, utilisez la section **Liens Google** du rapport : album Google Photos, vidéo/dossier Drive, documents/dossier Drive. Les liens sont enregistrés dans `report_links`, privés par défaut, puis ne sont affichés sur le site que si l’administrateur coche l’autorisation de publication. Les URL doivent être HTTPS et utiliser `photos.google.com`, `photos.app.goo.gl`, `drive.google.com` ou `docs.google.com`.
-- Le site ne vérifie pas les réglages de partage Google et ne les modifie jamais. Avant de rendre un lien public sur le site, réglez son accès dans Google pour le public voulu puis vérifiez-le avec un navigateur non connecté au compte propriétaire. Les visiteurs peuvent sinon voir une page « accès refusé » même si le lien est affiché sur le site. Les fichiers Google restent gouvernés par les autorisations de leur propriétaire.
-- Les photos, vidéos et couvertures déjà téléversées dans le bucket privé Supabase restent prises en charge. Les migrations et suppressions de rapports ne suppriment pas les objets existants liés à des médias Google; le bucket et ses fichiers legacy ne sont pas supprimés par cette évolution.
-- Le PDF est généré à la demande par une route serveur et téléchargé au format PDF. Il contient le titre, la date, le lieu, le résumé, le contenu textuel et les liens publiables (ou tous les liens lorsqu’un administrateur génère le PDF d’un brouillon); la galerie legacy n’est pas incorporée au PDF.
-- Le code est hébergé dans GitHub; les administrateurs éditent le contenu dans le site, jamais dans GitHub.
+- L’accueil rassemble les activités récentes, rapports publiés, photos et vidéos. Des états vides invitent à revenir quand aucun contenu n’est publié.
+- Les routes comprennent `/activites`, `/activites/[id]`, `/rapports`, `/rapports/[id]`, `/galerie` et `/videos`.
+- Les activités sont alimentées par les rapports réels publiés; il n’y a pas de fausses cartes. Sans couverture configurée, le site utilise une composition graphique abstraite et non une photo présentée comme réelle.
+- Les nouveaux médias peuvent être des liens HTTPS Google Photos, Google Drive, Google Docs ou YouTube. Les liens sont privés par défaut dans le formulaire; seuls les liens explicitement autorisés apparaissent sur le site et dans le PDF public. L’application ne peut pas vérifier le partage Google/YouTube ni le changer. Testez les liens en navigation privée avant publication; un lien peut rester inaccessible si son propriétaire le garde privé.
+- Les lignes et objets du bucket legacy `report-media` restent compatibles et le bucket demeure privé. Les objets existants ne sont pas supprimés par le script SQL.
 
-## Limites de cette première livraison
+## Administration et identité visuelle
 
-Cette base de code ne constitue pas une mise en production vérifiée. Le téléversement XHR indique une progression et autorise 100 Mo par fichier; il ne reprend pas les octets d'un envoi interrompu (le bouton de reprise réessaie le fichier depuis le début). Les médias volumineux nécessitent un téléversement resumable TUS ou un plafond inférieur adapté au plan Supabase. La compression vidéo n’est pas incluse. Les parcours doivent être exercés avec un vrai projet Supabase sur ordinateur et téléphone avant le lancement.
+Dans `/admin`, les administrateurs peuvent gérer les rapports, les liens, les brouillons, la prévisualisation, le PDF, la publication/dépublication et la suppression avec confirmation. Le serveur contrôle le rôle via `admin_users`; RLS protège également les écritures.
 
-## Migration et hébergement
+La rubrique **Identité visuelle et médias** permet d’enregistrer les coordonnées éditoriales, le logo, le favicon, la couverture d’accueil, les visuels des sections et le modèle PDF. Les paramètres sont stockés dans `public.site_settings`, ils persistent aux redéploiements. Les éléments destinés à l’identité publique sont enregistrés dans `site-assets` (lecture publique; écriture/suppression admins uniquement). Limite : 5 Mo et formats JPEG/PNG/WebP; les logos PDF acceptent JPEG/PNG. Les images de configuration n’acceptent pas de fichiers vidéo.
 
-Pour un projet déjà configuré, réexécutez `supabase/schema.sql` dans le SQL Editor Supabase avant d’ajouter des liens Google. Le script crée `report_links`, active RLS, installe les politiques admin/public, valide le domaine HTTPS et ajoute l’index. Il ne supprime ni ne modifie les lignes du bucket ou de `report_media`. Vérifiez la migration avec un rapport brouillon et des liens de test avant d’utiliser les rapports réels.
+Les couvertures de rapports peuvent être propres à chaque rapport. L’ordre d’affichage est : couverture dédiée du rapport, couverture legacy de ce rapport, puis couverture PDF par défaut. Les nouvelles couvertures individuelles résident dans le bucket privé `report-covers`; seules des URLs temporaires sont émises pour les rapports publiés, après contrôle du statut. Le preview et le PDF de brouillon sont réservés aux admins. Un remplacement met à jour la référence persistante avant de tenter le retrait contrôlé de l’ancien objet. Ne placez pas de document privé dans `site-assets`.
 
-GitHub peut héberger le code source, mais **GitHub Pages ne convient pas à cette application** : elle dépend du runtime Next.js pour l’authentification via cookies, `proxy`, Server Actions, routes dynamiques privées et le PDF dynamique. L’export statique Next.js ne prend pas en charge ces fonctions serveur ([documentation Next.js sur l’export statique](https://nextjs.org/docs/app/guides/static-exports)). Utilisez une plateforme compatible avec le runtime Next.js; le guide ci-dessous prend Vercel comme exemple. Cette architecture n’ajoute aucun service Google payant ni API Google.
+Les palettes disponibles sont prédéfinies. L’aperçu PDF reprend l’identité et la couverture retenues. La génération s’effectue côté serveur avec `pdf-lib` (images PNG/JPEG intégrées dans le PDF; [documentation de l’API PDF-LIB](https://pdf-lib.js.org/docs/api/classes/pdfdocument)).
 
-## Variables et déploiement
+## Migration Supabase
 
-### Déploiement exact (à exécuter après les validations)
+Le fichier [`supabase/schema.sql`](supabase/schema.sql) est le schéma et script de mise à niveau idempotent à utiliser dans le SQL Editor. Il ajoute `reports.cover_asset_path`, le type de lien `youtube_video`, `site_settings`, les buckets `site-assets` et `report-covers` et les politiques associées. Les visiteurs peuvent lire les paramètres d’identité destinés au site; seuls les administrateurs RLS peuvent les écrire. `site-assets` contient les images publiques; `report-covers` est privé et ses politiques n’autorisent la lecture qu’aux admins ou aux objets associés à un rapport publié. Les pages émettent des URLs signées pour ces rapports publiés. Le bucket `report-media` et les rapports legacy restent privés selon leurs politiques existantes.
 
-1. Créez un dépôt GitHub privé, ajoutez ce dossier, puis poussez la branche principale (`git init`, `git add .`, `git commit -m "Initial report site"`, `git branch -M main`, `git remote add origin <URL_DU_DEPOT>`, `git push -u origin main`). GitHub héberge le code; il ne stocke aucun média.
-2. Dans Supabase, ouvrez SQL Editor et exécutez `supabase/schema.sql`. Créez l’utilisateur initial et inscrivez son UUID dans `admin_users` comme ci-dessus. Désactivez le signup public.
-3. Dans Vercel, importez le dépôt GitHub. Gardez le framework Next.js détecté, la commande d’installation `pnpm install` et la commande de build `pnpm build`.
-4. Dans Vercel > Project > Settings > Environment Variables, définissez `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` et `SUPABASE_SERVICE_ROLE_KEY` (Production, Preview seulement si souhaité, Development selon votre politique). La service role key est secrète, serveur uniquement.
-5. Déployez. Dans Supabase Auth > URL Configuration, fixez le domaine Vercel ou le domaine personnalisé en Site URL et ajoutez les URLs de redirection permises. N’ajoutez que les domaines que vous contrôlez.
-6. Configurez le domaine et HTTPS dans Vercel. Dans Supabase Storage, confirmez que `report-media` est privé et que les limites MIME/poids correspondent au plan.
-7. Avant lancement, suivez la grille de vérification ci-dessous sur un déploiement de prévisualisation avec des fichiers de test autorisés. Ne publiez aucun rapport réel avant d’avoir confirmé l’accord de publication des médias et témoignages.
+Avant la mise en production, examinez les politiques existantes de votre projet Supabase et sauvegardez-le. L’exécution de la migration réelle, la création du premier admin et la configuration Auth/Storage sont des étapes opérateur séparées; elles ne sont pas effectuées par le code de cette livraison.
 
-### Grille de vérification de lancement
-
-- Liens Google : domaines acceptés/refusés, ajout/modification/suppression, brouillon privé, lien autorisé visible après publication, lien non autorisé masqué, partage réglé avec et sans session Google, liens présents dans le PDF.
-- Ordinateur : visiteur anonyme, absence de données sans contenu, affichage de rapports publiés uniquement, consultation d’un rapport, médias autorisés, téléchargement du PDF.
-- Admin : connexion valide/invalide, refus d’un utilisateur non inscrit à `admin_users`, création/enregistrement d’un brouillon, prévisualisation, sélection de couverture, cases de publication et témoignage, publication/dépublication, édition et suppression confirmée.
-- Téléversement : plusieurs photos et vidéos, progression, annulation, erreurs de format/taille, tentative de reprise après erreur, accès public avant et après publication.
-- Téléphone réel : connexion, saisie et édition, sélecteur de fichiers/caméra selon le navigateur, envoi sur Wi-Fi et réseau mobile, aperçu et lecture vidéo, mise en page portrait/paysage.
-- Vérifiez dans DevTools et les journaux qu’aucune clé service role n’est envoyée au navigateur; inspectez les politiques RLS avec un compte anonyme et un compte non admin.
-
-### Commandes de vérification
+## Vérifications locales
 
 ```sh
 pnpm typecheck
@@ -65,4 +49,13 @@ pnpm test:pdf
 pnpm build
 ```
 
-Cette grille n’a pas été exécutée dans cette livraison : aucun projet Supabase, compte admin, domaine de déploiement ou appareil mobile de test n’est connecté à cette session.
+## Déploiement Vercel
+
+GitHub héberge le code source. GitHub Pages ne convient pas à cette application dynamique (authentification serveur, cookies, routes privées, Server Actions et génération PDF); utilisez Vercel ou une plateforme compatible avec le runtime Next.js. L’export statique ne prend pas en charge ces fonctions serveur ([documentation Next.js](https://nextjs.org/docs/app/guides/static-exports)).
+
+1. Poussez le dépôt vers GitHub après revue et validation. Aucun push ni déploiement n’est réalisé par ce guide.
+2. Dans Supabase, sauvegardez puis exécutez le schéma, créez le premier utilisateur admin et désactivez l’inscription publique.
+3. Importez le dépôt GitHub dans Vercel, laissez le framework Next.js détecté et utilisez `pnpm install` / `pnpm build`.
+4. Ajoutez les variables de `.env.example` aux environnements souhaités dans Vercel. La clé service role est exclusivement serveur et ne doit jamais être ajoutée à une variable `NEXT_PUBLIC_*`.
+5. Configurez les URLs Auth Supabase avec le domaine contrôlé de Vercel ou le domaine personnalisé, puis vérifiez HTTPS et les règles de Storage.
+6. Avant le lancement, testez les liens, accès visiteur/admin, états sans contenu, PDF et formats mobiles avec un compte Supabase et des appareils/navigateurs réels. La validation locale ne remplace pas ces tests d’intégration.
