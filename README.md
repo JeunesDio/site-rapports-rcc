@@ -1,61 +1,81 @@
-# Rapports d’activités — Diocèse des Jeunes RCC de Cotonou
+# Rapports d’activités — Service Jeune RCCC de Cotonou
 
-Site public responsive et espace de gestion sous Next.js, TypeScript et Supabase. Les pages publiques lisent uniquement les rapports publiés; aucun contenu de démonstration n’est inclus.
+Application statique, sans serveur ni base distante. Le formulaire crée et prévisualise le rapport dans le navigateur; le PDF est téléchargé localement. Les rapports ne deviennent publics qu’après une revue humaine et leur ajout au dépôt GitHub.
 
-## Démarrage local
+Le modèle de rapport est une création institutionnelle originale. Il ne s’agit pas d’un formulaire officiel de l’INH.
 
-1. Utilisez Node.js 22.13+ et pnpm 11.25.0.
-2. Créez un projet Supabase et exécutez [`supabase/schema.sql`](supabase/schema.sql) dans le SQL Editor. Pour un projet existant, faites d’abord une sauvegarde et relisez le script : il ajoute les paramètres, les politiques et le bucket public réservé aux images d’identité, tout en conservant le bucket privé et les médias legacy. Cette livraison ne l’applique pas à votre instance.
-3. Copiez `.env.example` vers `.env.local` et renseignez les variables. `SUPABASE_SERVICE_ROLE_KEY` ne doit exister que côté serveur pour les opérations existantes qui le nécessitent; ne la préfixez jamais par `NEXT_PUBLIC_` et ne l’incluez jamais dans Git. La clé publishable et l’URL Supabase sont les seules valeurs Supabase utilisées dans le navigateur.
-4. Dans Supabase Auth, désactivez les inscriptions publiques. Créez le premier utilisateur depuis Auth > Users par une invitation ou par un opérateur de confiance, puis ajoutez son UUID dans `public.admin_users` depuis SQL Editor :
+## Organisation
 
-   ```sql
-   insert into public.admin_users(user_id) values ('UUID_DE_L_UTILISATEUR');
-   ```
+- `src/components/report-form.tsx` : formulaire local, sélection/compression des photos, aperçu PDF et téléchargements.
+- `src/lib/report.ts` : modèle de données, validations et rubriques éditoriales.
+- `src/lib/pdf.ts` : génération PDF côté navigateur, avec logos, pagination, sections optionnelles et photos intégrées.
+- `src/data/branding.ts` : mentions institutionnelles et chemins des logos réutilisés dans le site et les PDF.
+- `src/data/reports.json` : index versionné des rapports publics. Il est vide au départ; aucune activité fictive n’est publiée.
+- `public/rapports/` : PDF publiés.
+- `public/identite/` : les deux logos fournis par les responsables.
 
-   Aucun formulaire public ne crée de compte administrateur. Retirez un administrateur en supprimant sa ligne de `admin_users`.
-5. Exécutez `pnpm install`, puis `pnpm dev`. Le site est à `/`; la connexion admin est à `/admin/login`.
+Les rubriques et leur ordre sont centralisés dans `REPORT_RUBRICS`. Pour modifier le modèle, adaptez cette configuration et ses tests; le moteur PDF parcourt les mêmes rubriques que le formulaire. Les champs vides sont omis du PDF.
 
-## Pages publiques et médias
+## Modèle institutionnel
 
-- L’accueil rassemble les activités récentes, rapports publiés, photos et vidéos. Des états vides invitent à revenir quand aucun contenu n’est publié.
-- Les routes comprennent `/activites`, `/activites/[id]`, `/rapports`, `/rapports/[id]`, `/galerie` et `/videos`.
-- Les activités sont alimentées par les rapports réels publiés; il n’y a pas de fausses cartes. Sans couverture configurée, le site utilise une composition graphique abstraite et non une photo présentée comme réelle.
-- Les nouveaux médias peuvent être des liens HTTPS Google Photos, Google Drive, Google Docs ou YouTube. Les liens sont privés par défaut dans le formulaire; seuls les liens explicitement autorisés apparaissent sur le site et dans le PDF public. L’application ne peut pas vérifier le partage Google/YouTube ni le changer. Testez les liens en navigation privée avant publication; un lien peut rester inaccessible si son propriétaire le garde privé.
-- Les lignes et objets du bucket legacy `report-media` restent compatibles et le bucket demeure privé. Les objets existants ne sont pas supprimés par le script SQL.
+L’en-tête du PDF affiche les trois mentions demandées, dans cet ordre :
 
-## Administration et identité visuelle
+1. ARCHIDIOCÈSE DE COTONOU
+2. GROUPE DE PRIÈRE DU RENOUVEAU CHARISMATIQUE DE COTONOU
+3. SERVICE JEUNE DU RENOUVEAU CHARISMATIQUE CATHOLIQUE DE COTONOU
 
-Dans `/admin`, les administrateurs peuvent gérer les rapports, les liens, les brouillons, la prévisualisation, le PDF, la publication/dépublication et la suppression avec confirmation. Le serveur contrôle le rôle via `admin_users`; RLS protège également les écritures.
+Le logo de l’Archidiocèse est placé à gauche, celui du Renouveau à droite. Les images sont ajustées proportionnellement, sans cadre ajouté. Les fichiers fournis sont des JPEG à fond blanc incorporé; un futur logo PNG avec transparence sera aussi pris en charge si son chemin `.png` est déclaré dans `src/data/branding.ts`.
 
-La rubrique **Identité visuelle et médias** permet d’enregistrer les coordonnées éditoriales, le logo, le favicon, la couverture d’accueil, les visuels des sections et le modèle PDF. Les paramètres sont stockés dans `public.site_settings`, ils persistent aux redéploiements. Les éléments destinés à l’identité publique sont enregistrés dans `site-assets` (lecture publique; écriture/suppression admins uniquement). Limite : 5 Mo et formats JPEG/PNG/WebP; les logos PDF acceptent JPEG/PNG. Les images de configuration n’acceptent pas de fichiers vidéo.
-
-Les couvertures de rapports peuvent être propres à chaque rapport. L’ordre d’affichage est : couverture dédiée du rapport, couverture legacy de ce rapport, puis couverture PDF par défaut. Les nouvelles couvertures individuelles résident dans le bucket privé `report-covers`; seules des URLs temporaires sont émises pour les rapports publiés, après contrôle du statut. Le preview et le PDF de brouillon sont réservés aux admins. Un remplacement met à jour la référence persistante avant de tenter le retrait contrôlé de l’ancien objet. Ne placez pas de document privé dans `site-assets`.
-
-Les palettes disponibles sont prédéfinies. L’aperçu PDF reprend l’identité et la couverture retenues. La génération s’effectue côté serveur avec `pdf-lib` (images PNG/JPEG intégrées dans le PDF; [documentation de l’API PDF-LIB](https://pdf-lib.js.org/docs/api/classes/pdfdocument)).
-
-## Migration Supabase
-
-Le fichier [`supabase/schema.sql`](supabase/schema.sql) est le schéma et script de mise à niveau idempotent à utiliser dans le SQL Editor. Il ajoute `reports.cover_asset_path`, le type de lien `youtube_video`, `site_settings`, les buckets `site-assets` et `report-covers` et les politiques associées. Les visiteurs peuvent lire les paramètres d’identité destinés au site; seuls les administrateurs RLS peuvent les écrire. `site-assets` contient les images publiques; `report-covers` est privé et ses politiques n’autorisent la lecture qu’aux admins ou aux objets associés à un rapport publié. Les pages émettent des URLs signées pour ces rapports publiés. Le bucket `report-media` et les rapports legacy restent privés selon leurs politiques existantes.
-
-Avant la mise en production, examinez les politiques existantes de votre projet Supabase et sauvegardez-le. L’exécution de la migration réelle, la création du premier admin et la configuration Auth/Storage sont des étapes opérateur séparées; elles ne sont pas effectuées par le code de cette livraison.
-
-## Vérifications locales
+## Créer un rapport
 
 ```sh
-pnpm typecheck
-pnpm lint
-pnpm test:pdf
-pnpm build
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-## Déploiement Vercel
+Ouvrez l’adresse locale affichée par Vite, puis choisissez **Créer un rapport**. Seuls l’intitulé et la date sont obligatoires; les rubriques sans contenu sont omises. Les liens d’album Google Photos sont facultatifs et doivent être des liens HTTPS partagés avec les visiteurs visés. Le site ne peut pas vérifier les droits configurés sur Google Photos.
 
-GitHub héberge le code source. GitHub Pages ne convient pas à cette application dynamique (authentification serveur, cookies, routes privées, Server Actions et génération PDF); utilisez Vercel ou une plateforme compatible avec le runtime Next.js. L’export statique ne prend pas en charge ces fonctions serveur ([documentation Next.js](https://nextjs.org/docs/app/guides/static-exports)).
+Les photos locales sont facultatives. JPEG, PNG et WebP sont redimensionnés et compressés dans le navigateur avant leur intégration au PDF; jusqu’à 12 images et 18 Mo après compression sont acceptés. Elles ne sont pas téléversées. Le PDF et une fiche JSON prête à intégrer sont téléchargés séparément.
 
-1. Poussez le dépôt vers GitHub après revue et validation. Aucun push ni déploiement n’est réalisé par ce guide.
-2. Dans Supabase, sauvegardez puis exécutez le schéma, créez le premier utilisateur admin et désactivez l’inscription publique.
-3. Importez le dépôt GitHub dans Vercel, laissez le framework Next.js détecté et utilisez `pnpm install` / `pnpm build`.
-4. Ajoutez les variables de `.env.example` aux environnements souhaités dans Vercel. La clé service role est exclusivement serveur et ne doit jamais être ajoutée à une variable `NEXT_PUBLIC_*`.
-5. Configurez les URLs Auth Supabase avec le domaine contrôlé de Vercel ou le domaine personnalisé, puis vérifiez HTTPS et les règles de Storage.
-6. Avant le lancement, testez les liens, accès visiteur/admin, états sans contenu, PDF et formats mobiles avec un compte Supabase et des appareils/navigateurs réels. La validation locale ne remplace pas ces tests d’intégration.
+La page ne conserve pas les brouillons après fermeture ou rechargement. Elle n’a pas d’authentification et ne doit pas servir à préparer un document confidentiel. Aucun rapport ni témoignage n’est envoyé ou publié automatiquement.
+
+## Publier un rapport
+
+GitHub Pages ne permet pas au navigateur d’écrire dans le dépôt. La publication se fait donc par revue et commit :
+
+1. Télécharger le PDF et la fiche JSON depuis le formulaire.
+2. Vérifier le rapport, les autorisations de publication, les photos, les témoignages et le partage de l’album.
+3. Copier le PDF dans `public/rapports/`.
+4. Ajouter l’objet JSON fourni à la liste `src/data/reports.json`. Le chemin `pdf` y est relatif à `public/`, par exemple `rapports/2026-10-27-veillee.pdf`.
+5. Exécuter les commandes de vérification ci-dessous et consulter le site local.
+6. Faire relire les changements, puis les committer et pousser sur `main`.
+
+Le workflow `.github/workflows/deploy.yml` construit le site et déploie `dist/` sur GitHub Pages quand `main` reçoit un push. Aucun jeton GitHub n’est utilisé par le site ou le navigateur. Dans GitHub, régler **Settings → Pages → Build and deployment → GitHub Actions**. La première mise en ligne et les pushes futurs déclencheront le workflow; aucun push n’est réalisé dans le cadre de cette refonte.
+
+Vite est configuré avec la base `/site-rapports-rcc/`, adaptée à l’adresse de projet `https://jeunesdio.github.io/site-rapports-rcc/`. Pour un domaine ou un dépôt différent, changer `base` dans `vite.config.ts`. [Guide officiel Vite pour GitHub Pages](https://vite.dev/guide/static-deploy).
+
+## Contrôles locaux
+
+```sh
+pnpm lint
+pnpm typecheck
+pnpm test:pdf
+pnpm build
+pnpm test:pages
+```
+
+Les tests vérifient les rubriques et leur ordre, les champs obligatoires, les liens Google Photos, la création d’un PDF sans photo et avec plusieurs photos, les textes longs accentués, ainsi que le préfixe et les fichiers du build GitHub Pages.
+
+## Anciennes données Supabase
+
+Cette refonte ne se connecte pas à Supabase, n’exécute aucune migration et ne supprime aucune donnée distante. Le dépôt ne contient pas de PDF de rapport ni d’index de publications à migrer. Les éventuels rapports, médias et réglages de l’ancienne instance Supabase n’ont pas pu être inventoriés; avant de remplacer le site actuellement publié, exportez et relisez les rapports que vous souhaitez conserver, puis ajoutez-les manuellement au nouvel index public. Ne publiez pas de brouillon ni de contenu personnel sans autorisation.
+
+Les anciennes pages Next.js, routes API, fonctions d’administration, configuration Supabase et scripts SQL ne sont plus utilisés par cette version statique. Leur code reste consultable dans l’historique Git; leur retrait local n’affecte pas la base ou les fichiers Supabase existants.
+
+## Confidentialité et limites
+
+- Les fichiers placés dans `public/rapports/` et les liens inscrits dans `src/data/reports.json` seront publics.
+- Un lien Google Photos peut être accessible à toute personne qui le possède selon le partage Google configuré; son absence de l’accueil ne le rend pas privé.
+- Les brouillons et les images locales ne quittent pas le navigateur, mais il n’existe pas de synchronisation ni de récupération de brouillon.
+- Un site GitHub Pages est public et sans contrôle d’accès. Pour des rapports privés, utilisez un service avec authentification et stockage privé; cette version ne répond pas à ce besoin.
+- Le formulaire produit le PDF dans les navigateurs compatibles avec `createImageBitmap`, le canevas et `Blob`. Aucune clé ou variable secrète de production n’est nécessaire.
