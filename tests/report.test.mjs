@@ -14,7 +14,7 @@ test('le modèle institutionnel conserve les rubriques et leur ordre', () => {
     'Informations générales de l’activité', 'Contexte et objectifs', 'Déroulement', 'Participation et effectif',
     'Résultats et faits marquants', 'Témoignages', 'Difficultés éventuelles', 'Conclusion et perspectives', 'Rédaction et validation',
   ]);
-  assert.deepEqual(REPORT_RUBRICS[0].fields.slice(0, 4).map((field) => field.label), ['Intitulé de l’activité', 'Date de l’activité', 'Lieu', 'Thème']);
+  assert.deepEqual(REPORT_RUBRICS[0].fields.slice(0, 5).map((field) => field.label), ['Titre du rapport / activité', 'Église, communauté, paroisse ou service', 'Thème de l’activité', 'Date de l’activité', 'Lieu']);
 });
 
 test('valide les chemins et les métadonnées des rapports publics', () => {

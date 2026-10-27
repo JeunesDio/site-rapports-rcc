@@ -1,16 +1,19 @@
-export type PhotoAsset = {
+export type ImageAsset = {
   name: string;
   bytes: Uint8Array;
   mimeType: 'image/jpeg' | 'image/png';
-  caption: string;
   previewUrl?: string;
 };
 
+export type PhotoAsset = ImageAsset & { caption: string };
+
 export type ReportDraft = {
   activityName: string;
+  organization: string;
   activityDate: string;
   place: string;
   theme: string;
+  organizer: string;
   participants: string;
   context: string;
   objectives: string;
@@ -25,11 +28,15 @@ export type ReportDraft = {
   validatedBy: string;
   validationDate: string;
   photoAlbumUrl: string;
+  logoLeft?: ImageAsset | null;
+  logoRight?: ImageAsset | null;
+  coverPhotos: PhotoAsset[];
+  coverPhotoIndex: number;
   photos: PhotoAsset[];
 };
 
 export type ReportField = {
-  key: Exclude<keyof ReportDraft, 'photos'>;
+  key: Exclude<keyof ReportDraft, 'coverPhotos' | 'photos' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight'>;
   label: string;
   kind: 'text' | 'date' | 'number' | 'textarea' | 'url';
   required?: boolean;
@@ -44,10 +51,13 @@ export const REPORT_RUBRICS: ReportRubric[] = [
     id: 'general',
     title: 'Informations générales de l’activité',
     fields: [
-      { key: 'activityName', label: 'Intitulé de l’activité', kind: 'text', required: true },
+      { key: 'activityName', label: 'Titre du rapport / activité', kind: 'text', required: true },
+      { key: 'organization', label: 'Église, communauté, paroisse ou service', kind: 'text' },
+      { key: 'theme', label: 'Thème de l’activité', kind: 'text' },
       { key: 'activityDate', label: 'Date de l’activité', kind: 'date', required: true },
       { key: 'place', label: 'Lieu', kind: 'text' },
-      { key: 'theme', label: 'Thème', kind: 'text' },
+      { key: 'organizer', label: 'Organisateur', kind: 'text' },
+      { key: 'preparedBy', label: 'Responsable du rapport', kind: 'text' },
       { key: 'photoAlbumUrl', label: 'Lien de l’album Google Photos', kind: 'url', help: 'Facultatif. Le lien doit être partagé avec les visiteurs autorisés.' },
     ],
   },
@@ -83,7 +93,6 @@ export const REPORT_RUBRICS: ReportRubric[] = [
     id: 'validation',
     title: 'Rédaction et validation',
     fields: [
-      { key: 'preparedBy', label: 'Rapport rédigé par', kind: 'text' },
       { key: 'validatedBy', label: 'Rapport validé par', kind: 'text' },
       { key: 'validationDate', label: 'Date de validation', kind: 'date' },
     ],
@@ -91,9 +100,9 @@ export const REPORT_RUBRICS: ReportRubric[] = [
 ];
 
 export const EMPTY_REPORT: ReportDraft = {
-  activityName: '', activityDate: '', place: '', theme: '', participants: '', context: '', objectives: '',
+  activityName: '', organization: '', activityDate: '', place: '', theme: '', organizer: '', participants: '', context: '', objectives: '',
   course: '', participation: '', results: '', testimonials: '', difficulties: '', conclusion: '',
-  perspectives: '', preparedBy: '', validatedBy: '', validationDate: '', photoAlbumUrl: '', photos: [],
+  perspectives: '', preparedBy: '', validatedBy: '', validationDate: '', photoAlbumUrl: '', coverPhotos: [], coverPhotoIndex: 0, photos: [],
 };
 
 export function validatePhotoAlbumUrl(value: string): string | null {
