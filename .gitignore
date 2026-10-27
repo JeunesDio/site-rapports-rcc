@@ -1,14 +1,11 @@
 node_modules/
 .next/
-out/
 dist/
-build/
 coverage/
-.turbo/
-.vercel/
 .pnpm-store/
 work/
 outputs/
+.vite/
 *.tsbuildinfo
 *.log
 *.pem
@@ -16,4 +13,3 @@ outputs/
 credentials*.json
 secrets.*
 .env*
-!.env.example
