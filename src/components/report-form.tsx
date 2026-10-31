@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { makePublicationEntry } from '../lib/publication';
-import { EMPTY_REPORT, REPORT_RUBRICS, slugify, validateReport, type ImageAsset, type PhotoAsset, type ReportDraft } from '../lib/report';
+import { EMPTY_REPORT, REPORT_RUBRICS, slugify, validateReport, type AudioAsset, type ImageAsset, type PhotoAsset, type ReportDraft } from '../lib/report';
 import { publicAsset } from '../lib/site';
 import { BRANDING } from '../data/branding';
 import { createPdfBlob } from '../lib/download';
 
 const MAX_FILE_BYTES = 12 * 1024 * 1024;
 const MAX_LOGO_BYTES = 8 * 1024 * 1024;
+const MAX_TESTIMONIAL_AUDIO_BYTES = 25 * 1024 * 1024;
 const MAX_IMAGES = 12;
 const MAX_COVER_PHOTOS = 4;
 const MAX_TOTAL_PHOTO_BYTES = 18 * 1024 * 1024;
 const MAX_IMAGE_EDGE = 1800;
 const MAX_LOGO_EDGE = 1200;
+const AUDIO_MIME_BY_EXTENSION: Record<string, string> = {
+  aac: 'audio/aac', m4a: 'audio/mp4', mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav', webm: 'audio/webm',
+};
 type LogoKey = 'logoLeft' | 'logoRight';
 type PhotoGroup = 'coverPhotos' | 'photos';
 
@@ -79,6 +83,20 @@ async function prepareLogo(file: File): Promise<ImageAsset> {
   } finally { bitmap.close(); }
 }
 
+async function prepareTestimonialAudio(file: File): Promise<AudioAsset> {
+  const extension = file.name.split('.').at(-1)?.toLowerCase() ?? '';
+  const mimeType = AUDIO_MIME_BY_EXTENSION[extension];
+  if (!mimeType) throw new Error('Choisissez un enregistrement AAC, M4A, MP3, OGG, WAV ou WebM.');
+  if (!file.size) throw new Error('Le fichier audio est vide.');
+  if (file.size > MAX_TESTIMONIAL_AUDIO_BYTES) throw new Error('L’enregistrement audio doit faire au maximum 25 Mo.');
+  return {
+    name: file.name,
+    bytes: new Uint8Array(await file.arrayBuffer()),
+    mimeType,
+    previewUrl: URL.createObjectURL(file),
+  };
+}
+
 async function loadDefaultLogo(path: string): Promise<ImageAsset> {
   const response = await fetch(publicAsset(path));
   if (!response.ok) throw new Error('Impossible de charger un logo institutionnel. Réessayez ou importez un autre logo.');
@@ -105,6 +123,7 @@ export default function ReportForm() {
   const [photoError, setPhotoError] = useState('');
   const [coverPhotoError, setCoverPhotoError] = useState('');
   const [logoError, setLogoError] = useState('');
+  const [audioError, setAudioError] = useState('');
   const [working, setWorking] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
   const [pdfName, setPdfName] = useState('');
@@ -122,7 +141,7 @@ export default function ReportForm() {
     URL.revokeObjectURL(url);
     localUrls.current = localUrls.current.filter((candidate) => candidate !== url);
   };
-  const update = (key: keyof Omit<ReportDraft, 'coverPhotos' | 'photos' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight'>, value: string) => {
+  const update = (key: keyof Omit<ReportDraft, 'coverPhotos' | 'photos' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight' | 'testimonialAudio'>, value: string) => {
     setReport((current) => ({ ...current, [key]: value }));
   };
 
@@ -148,6 +167,21 @@ export default function ReportForm() {
       if (previous?.previewUrl) releaseUrl(previous.previewUrl);
       return { ...current, [key]: value };
     });
+  };
+
+  const chooseTestimonialAudio = async (file: File | undefined) => {
+    if (!file) return;
+    setAudioError('');
+    try {
+      const audio = await prepareTestimonialAudio(file);
+      trackUrl(audio.previewUrl);
+      setReport((current) => {
+        if (current.testimonialAudio) releaseUrl(current.testimonialAudio.previewUrl);
+        return { ...current, testimonialAudio: audio };
+      });
+    } catch (error) {
+      setAudioError(error instanceof Error ? error.message : 'Cet enregistrement n’a pas pu être lu.');
+    }
   };
 
   const addPhotos = async (group: PhotoGroup, files: FileList | null) => {
@@ -337,6 +371,13 @@ export default function ReportForm() {
               {field.help && <small>{field.help}</small>}
             </label>)}
           </div>
+          {rubric.id === 'testimonials' && <div className="testimonial-audio">
+            <h3>Enregistrement audio <span className="optional">facultatif</span></h3>
+            <p className="field-help">Importez un enregistrement AAC, M4A, MP3, OGG, WAV ou WebM (25 Mo maximum). Il sera joint au PDF. Pour le récupérer, téléchargez le PDF et ouvrez sa liste de pièces jointes dans un lecteur compatible.</p>
+            <label className="file-picker"><span>{report.testimonialAudio ? 'Remplacer l’enregistrement' : 'Importer un enregistrement'}</span><input type="file" accept="audio/*,.aac,.m4a,.mp3,.ogg,.wav,.webm" onChange={(event) => { void chooseTestimonialAudio(event.target.files?.[0]); event.currentTarget.value = ''; }} /></label>
+            {audioError && <p className="error-message" role="alert">{audioError}</p>}
+            {report.testimonialAudio && <div className="testimonial-audio-preview"><strong>{report.testimonialAudio.name}</strong><audio controls preload="metadata" src={report.testimonialAudio.previewUrl}>La lecture audio n’est pas prise en charge par ce navigateur.</audio><button type="button" className="text-button danger-text" onClick={() => { if (report.testimonialAudio) releaseUrl(report.testimonialAudio.previewUrl); setReport((current) => ({ ...current, testimonialAudio: null })); }}>Retirer l’enregistrement</button></div>}
+          </div>}
         </section>)}
       </fieldset>
 

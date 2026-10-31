@@ -6,6 +6,7 @@ export type ImageAsset = {
 };
 
 export type PhotoAsset = ImageAsset & { caption: string };
+export type AudioAsset = { name: string; bytes: Uint8Array; mimeType: string; previewUrl: string };
 
 export type ReportDraft = {
   activityName: string;
@@ -20,6 +21,7 @@ export type ReportDraft = {
   course: string;
   results: string;
   testimonials: string;
+  testimonialAudio: AudioAsset | null;
   difficulties: string;
   conclusion: string;
   perspectives: string;
@@ -35,7 +37,7 @@ export type ReportDraft = {
 };
 
 export type ReportField = {
-  key: Exclude<keyof ReportDraft, 'coverPhotos' | 'photos' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight'>;
+  key: Exclude<keyof ReportDraft, 'coverPhotos' | 'photos' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight' | 'testimonialAudio'>;
   label: string;
   kind: 'text' | 'date' | 'number' | 'textarea' | 'url';
   required?: boolean;
@@ -97,7 +99,7 @@ export const REPORT_RUBRICS: ReportRubric[] = [
 
 export const EMPTY_REPORT: ReportDraft = {
   activityName: '', organization: '', activityDate: '', place: '', theme: '', organizer: '', participants: '', context: '', objectives: '',
-  course: '', results: '', testimonials: '', difficulties: '', conclusion: '',
+  course: '', results: '', testimonials: '', testimonialAudio: null, difficulties: '', conclusion: '',
   perspectives: '', preparedBy: '', validatedBy: '', validationDate: '', photoAlbumUrl: '', coverPhotos: [], coverPhotoIndex: 0, photos: [],
 };
 

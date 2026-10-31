@@ -92,6 +92,12 @@ function dateLabel(value: string) {
 
 export async function buildReportPdf(report: ReportDraft, branding: PdfBranding = {}): Promise<Uint8Array> {
   const document = await PDFDocument.create();
+  if (report.testimonialAudio) {
+    await document.attach(report.testimonialAudio.bytes, report.testimonialAudio.name, {
+      mimeType: report.testimonialAudio.mimeType,
+      description: 'Enregistrement audio du témoignage',
+    });
+  }
   document.setTitle(`Rapport d’activité — ${report.activityName}`);
   if (report.organization.trim()) document.setAuthor(report.organization.trim());
   document.setSubject('Rapport d’activité');
@@ -268,9 +274,11 @@ export async function buildReportPdf(report: ReportDraft, branding: PdfBranding 
 
   for (const rubric of REPORT_RUBRICS.filter((entry) => entry.id !== 'general')) {
     const fields = rubric.fields.map((field) => ({ field, value: fieldValue(report, field.key) })).filter(({ value }) => value);
-    if (!fields.length) continue;
+    const audioTestimonial = rubric.id === 'testimonials' ? report.testimonialAudio : null;
+    if (!fields.length && !audioTestimonial) continue;
     drawSectionTitle(rubric.title);
     for (const { field, value } of fields) drawField(field.label, value);
+    if (audioTestimonial) drawField('Enregistrement audio joint au PDF', audioTestimonial.name);
   }
 
   const albumUrl = report.photoAlbumUrl.trim();
