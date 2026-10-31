@@ -18,7 +18,6 @@ export type ReportDraft = {
   context: string;
   objectives: string;
   course: string;
-  participation: string;
   results: string;
   testimonials: string;
   difficulties: string;
@@ -71,12 +70,9 @@ export const REPORT_RUBRICS: ReportRubric[] = [
   },
   { id: 'course', title: 'Déroulement', fields: [{ key: 'course', label: 'Déroulement de l’activité', kind: 'textarea' }] },
   {
-    id: 'participation',
-    title: 'Participation et effectif',
-    fields: [
-      { key: 'participants', label: 'Nombre de participants', kind: 'number' },
-      { key: 'participation', label: 'Composition et participation', kind: 'textarea' },
-    ],
+    id: 'headcount',
+    title: 'Effectif',
+    fields: [{ key: 'participants', label: 'Nombre de participants', kind: 'number' }],
   },
   { id: 'results', title: 'Résultats et faits marquants', fields: [{ key: 'results', label: 'Résultats et faits marquants', kind: 'textarea' }] },
   { id: 'testimonials', title: 'Témoignages', fields: [{ key: 'testimonials', label: 'Témoignages autorisés', kind: 'textarea', help: 'N’ajoutez que des témoignages dont la publication a été autorisée.' }] },
@@ -101,7 +97,7 @@ export const REPORT_RUBRICS: ReportRubric[] = [
 
 export const EMPTY_REPORT: ReportDraft = {
   activityName: '', organization: '', activityDate: '', place: '', theme: '', organizer: '', participants: '', context: '', objectives: '',
-  course: '', participation: '', results: '', testimonials: '', difficulties: '', conclusion: '',
+  course: '', results: '', testimonials: '', difficulties: '', conclusion: '',
   perspectives: '', preparedBy: '', validatedBy: '', validationDate: '', photoAlbumUrl: '', coverPhotos: [], coverPhotoIndex: 0, photos: [],
 };
 

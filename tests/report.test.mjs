@@ -11,9 +11,11 @@ test('le modèle institutionnel conserve les rubriques et leur ordre', () => {
     'SERVICE JEUNE DU RENOUVEAU CHARISMATIQUE CATHOLIQUE DE COTONOU',
   ]);
   assert.deepEqual(REPORT_RUBRICS.map((rubric) => rubric.title), [
-    'Informations générales de l’activité', 'Contexte et objectifs', 'Déroulement', 'Participation et effectif',
+    'Informations générales de l’activité', 'Contexte et objectifs', 'Déroulement', 'Effectif',
     'Résultats et faits marquants', 'Témoignages', 'Difficultés éventuelles', 'Conclusion et perspectives', 'Rédaction et validation',
   ]);
+  assert.deepEqual(REPORT_RUBRICS.find((rubric) => rubric.id === 'headcount')?.fields.map((field) => field.key), ['participants']);
+  assert.ok(!Object.hasOwn(EMPTY_REPORT, 'participation'));
   assert.deepEqual(REPORT_RUBRICS[0].fields.slice(0, 5).map((field) => field.label), ['Titre du rapport / activité', 'Église, communauté, paroisse ou service', 'Thème de l’activité', 'Date de l’activité', 'Lieu']);
 });
 
