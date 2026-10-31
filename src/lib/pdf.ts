@@ -99,7 +99,8 @@ export async function buildReportPdf(report: ReportDraft, branding: PdfBranding 
     });
   }
   document.setTitle(`Rapport d’activité — ${report.activityName}`);
-  if (report.organization.trim()) document.setAuthor(report.organization.trim());
+  const organizationLines = report.organization.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (organizationLines.length) document.setAuthor(organizationLines.join(' — '));
   document.setSubject('Rapport d’activité');
   const regular = await document.embedFont(StandardFonts.Helvetica);
   const bold = await document.embedFont(StandardFonts.HelveticaBold);
@@ -228,7 +229,7 @@ export async function buildReportPdf(report: ReportDraft, branding: PdfBranding 
     const organization = report.organization.trim();
     if (organization) {
       const size = 8;
-      const lines = wrap(organization, size, bold, PAGE_WIDTH - MARGIN * 2 - 76).slice(0, 2);
+      const lines = wrap(organization, size, bold, PAGE_WIDTH - MARGIN * 2 - 76);
       for (const [index, line] of lines.entries()) {
         const textWidth = bold.widthOfTextAtSize(line, size);
         target.drawText(line, { x: (PAGE_WIDTH - textWidth) / 2, y: PAGE_HEIGHT - 48 - index * 10, size, font: bold, color: GREEN });
@@ -311,7 +312,7 @@ export async function buildReportPdf(report: ReportDraft, branding: PdfBranding 
   for (let index = 0; index < innerPages.length; index += 1) {
     const current = innerPages[index];
     current.drawLine({ start: { x: MARGIN, y: 43 }, end: { x: PAGE_WIDTH - MARGIN, y: 43 }, thickness: 0.5, color: RULE });
-    if (report.organization.trim()) current.drawText(report.organization.trim(), { x: MARGIN, y: 28, size: 7.1, font: regular, color: MUTED, maxWidth: PAGE_WIDTH - MARGIN * 2 - 78 });
+    if (organizationLines[0]) current.drawText(organizationLines[0], { x: MARGIN, y: 28, size: 7.1, font: regular, color: MUTED, maxWidth: PAGE_WIDTH - MARGIN * 2 - 78 });
     const pagination = `Page ${index + 1} / ${innerPages.length}`;
     const paginationWidth = regular.widthOfTextAtSize(pagination, 7.3);
     current.drawText(pagination, { x: PAGE_WIDTH - MARGIN - paginationWidth, y: 28, size: 7.3, font: regular, color: MUTED });

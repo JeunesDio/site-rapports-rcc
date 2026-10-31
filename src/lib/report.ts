@@ -53,7 +53,7 @@ export const REPORT_RUBRICS: ReportRubric[] = [
     title: 'Informations générales de l’activité',
     fields: [
       { key: 'activityName', label: 'Titre du rapport / activité', kind: 'text', required: true },
-      { key: 'organization', label: 'Église, communauté, paroisse ou service', kind: 'text' },
+      { key: 'organization', label: 'Église, communauté, paroisse ou service', kind: 'textarea', help: 'Ces trois lignes constituent l’en-tête institutionnel. Vous pouvez les modifier.' },
       { key: 'theme', label: 'Thème de l’activité', kind: 'text' },
       { key: 'activityDate', label: 'Date de l’activité', kind: 'date', required: true },
       { key: 'place', label: 'Lieu', kind: 'text' },

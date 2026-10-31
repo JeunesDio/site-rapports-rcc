@@ -118,7 +118,7 @@ function fileLabel(file: ImageAsset) {
 }
 
 export default function ReportForm() {
-  const [report, setReport] = useState<ReportDraft>(() => ({ ...EMPTY_REPORT, organization: BRANDING.mentions.service }));
+  const [report, setReport] = useState<ReportDraft>(() => ({ ...EMPTY_REPORT, organization: BRANDING.reportHeader.join('\n') }));
   const [errors, setErrors] = useState<string[]>([]);
   const [photoError, setPhotoError] = useState('');
   const [coverPhotoError, setCoverPhotoError] = useState('');
