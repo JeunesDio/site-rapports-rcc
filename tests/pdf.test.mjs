@@ -44,6 +44,17 @@ test('intègre plusieurs photos directement au PDF', async () => {
   assert.equal(imageCountOnPage(document, 1), 4, 'les deux logos de page et les deux photos complémentaires sont dans les pages intérieures');
 });
 
+test('place les photos dans la section de chaque témoignage correspondant', async () => {
+  const bytes = await buildReportPdf(sample({ testimonials: [
+    { text: 'Nous avons prié ensemble.', photos: [{ name: 'groupe.png', bytes: png, mimeType: 'image/png', caption: 'Le groupe après la prière.' }] },
+    { text: 'Cette rencontre m’a encouragé.', photos: [{ name: 'partage.png', bytes: png, mimeType: 'image/png', caption: '' }] },
+  ] }), logos);
+  const document = await PDFDocument.load(bytes);
+  assert.equal(document.getPageCount(), 2, 'les témoignages illustrés sont placés dans les pages intérieures');
+  assert.equal(imageCountOnPage(document, 0), 2, 'la couverture ne reçoit pas les images des témoignages');
+  assert.equal(imageCountOnPage(document, 1), 4, 'la page des témoignages contient les deux logos et les deux photos correspondantes');
+});
+
 test('place plusieurs photos de couverture sur la première page avec deux logos', async () => {
   const photos = [
     { name: 'carree.jpg', bytes: archdioceseLogo.bytes, mimeType: 'image/jpeg', caption: 'Photo principale.' },

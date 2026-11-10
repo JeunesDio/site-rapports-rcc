@@ -35,7 +35,7 @@ pnpm dev
 
 Ouvrez l’adresse locale affichée par Vite, puis choisissez **Créer un rapport**. Seuls l’intitulé et la date sont obligatoires; les rubriques sans contenu sont omises. Les liens d’album Google Photos sont facultatifs et doivent être des liens HTTPS partagés avec les visiteurs visés. Le site ne peut pas vérifier les droits configurés sur Google Photos.
 
-Les photos locales sont facultatives. JPEG, PNG et WebP sont redimensionnés et compressés dans le navigateur avant leur intégration au PDF; jusqu’à 12 images et 18 Mo après compression sont acceptés. Elles ne sont pas téléversées. Le PDF et une fiche JSON prête à intégrer sont téléchargés séparément.
+Les photos locales sont facultatives. JPEG, PNG et WebP sont redimensionnés et compressés dans le navigateur avant leur intégration au PDF; jusqu’à 12 images et 18 Mo après compression sont acceptés, toutes rubriques confondues. Chaque témoignage peut contenir plusieurs photos; elles sont prévisualisées et peuvent être remplacées ou supprimées. Dans le PDF, elles suivent le témoignage correspondant et peuvent porter une légende. Les images ne sont pas téléversées. Le PDF et une fiche JSON prête à intégrer sont téléchargés séparément.
 
 La page ne conserve pas les brouillons après fermeture ou rechargement. Elle n’a pas d’authentification et ne doit pas servir à préparer un document confidentiel. Aucun rapport ni témoignage n’est envoyé ou publié automatiquement.
 

@@ -6,6 +6,7 @@ export type ImageAsset = {
 };
 
 export type PhotoAsset = ImageAsset & { caption: string };
+export type Testimonial = { text: string; photos: PhotoAsset[] };
 export type AudioAsset = { name: string; bytes: Uint8Array; mimeType: string; previewUrl: string };
 
 export type ReportDraft = {
@@ -20,7 +21,7 @@ export type ReportDraft = {
   objectives: string;
   course: string;
   results: string;
-  testimonials: string;
+  testimonials: Testimonial[];
   testimonialAudio: AudioAsset | null;
   difficulties: string;
   conclusion: string;
@@ -37,7 +38,7 @@ export type ReportDraft = {
 };
 
 export type ReportField = {
-  key: Exclude<keyof ReportDraft, 'coverPhotos' | 'photos' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight' | 'testimonialAudio'>;
+  key: Exclude<keyof ReportDraft, 'coverPhotos' | 'photos' | 'testimonials' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight' | 'testimonialAudio'>;
   label: string;
   kind: 'text' | 'date' | 'number' | 'textarea' | 'url';
   required?: boolean;
@@ -77,7 +78,7 @@ export const REPORT_RUBRICS: ReportRubric[] = [
     fields: [{ key: 'participants', label: 'Nombre de participants', kind: 'number' }],
   },
   { id: 'results', title: 'Résultats et faits marquants', fields: [{ key: 'results', label: 'Résultats et faits marquants', kind: 'textarea' }] },
-  { id: 'testimonials', title: 'Témoignages', fields: [{ key: 'testimonials', label: 'Témoignages autorisés', kind: 'textarea', help: 'N’ajoutez que des témoignages dont la publication a été autorisée.' }] },
+  { id: 'testimonials', title: 'Témoignages', fields: [] },
   { id: 'difficulties', title: 'Difficultés éventuelles', fields: [{ key: 'difficulties', label: 'Difficultés rencontrées', kind: 'textarea' }] },
   {
     id: 'closing',
@@ -99,7 +100,7 @@ export const REPORT_RUBRICS: ReportRubric[] = [
 
 export const EMPTY_REPORT: ReportDraft = {
   activityName: '', organization: '', activityDate: '', place: '', theme: '', organizer: '', participants: '', context: '', objectives: '',
-  course: '', results: '', testimonials: '', testimonialAudio: null, difficulties: '', conclusion: '',
+  course: '', results: '', testimonials: [], testimonialAudio: null, difficulties: '', conclusion: '',
   perspectives: '', preparedBy: '', validatedBy: '', validationDate: '', photoAlbumUrl: '', coverPhotos: [], coverPhotoIndex: 0, photos: [],
 };
 

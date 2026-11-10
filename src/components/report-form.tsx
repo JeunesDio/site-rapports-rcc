@@ -141,7 +141,7 @@ export default function ReportForm() {
     URL.revokeObjectURL(url);
     localUrls.current = localUrls.current.filter((candidate) => candidate !== url);
   };
-  const update = (key: keyof Omit<ReportDraft, 'coverPhotos' | 'photos' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight' | 'testimonialAudio'>, value: string) => {
+  const update = (key: keyof Omit<ReportDraft, 'coverPhotos' | 'photos' | 'testimonials' | 'coverPhotoIndex' | 'logoLeft' | 'logoRight' | 'testimonialAudio'>, value: string) => {
     setReport((current) => ({ ...current, [key]: value }));
   };
 
@@ -187,7 +187,7 @@ export default function ReportForm() {
   const addPhotos = async (group: PhotoGroup, files: FileList | null) => {
     if (!files?.length) return;
     const selected = Array.from(files);
-    const currentCount = report.coverPhotos.length + report.photos.length;
+    const currentCount = report.coverPhotos.length + report.photos.length + report.testimonials.reduce((sum, testimonial) => sum + testimonial.photos.length, 0);
     if (currentCount + selected.length > MAX_IMAGES) {
       const message = `Limite de ${MAX_IMAGES} photos au total par rapport.`;
       if (group === 'coverPhotos') setCoverPhotoError(message); else setPhotoError(message);
@@ -201,7 +201,7 @@ export default function ReportForm() {
     const prepared: PhotoAsset[] = [];
     try {
       for (const file of selected) prepared.push(await preparePhoto(file));
-      const total = [...report.coverPhotos, ...report.photos, ...prepared].reduce((sum, photo) => sum + photo.bytes.byteLength, 0);
+      const total = [...report.coverPhotos, ...report.photos, ...report.testimonials.flatMap((testimonial) => testimonial.photos), ...prepared].reduce((sum, photo) => sum + photo.bytes.byteLength, 0);
       if (total > MAX_TOTAL_PHOTO_BYTES) {
         prepared.forEach((photo) => URL.revokeObjectURL(photo.previewUrl!));
         const message = 'Les photos compressées dépassent 18 Mo au total. Retirez-en quelques-unes ou choisissez des images plus petites.';
@@ -216,6 +216,64 @@ export default function ReportForm() {
       if (group === 'coverPhotos') setCoverPhotoError(message); else setPhotoError(message);
     }
   };
+
+  const addTestimonialPhotos = async (testimonialIndex: number, files: FileList | null) => {
+    if (!files?.length) return;
+    const selected = Array.from(files);
+    const currentCount = report.coverPhotos.length + report.photos.length + report.testimonials.reduce((sum, testimonial) => sum + testimonial.photos.length, 0);
+    if (currentCount + selected.length > MAX_IMAGES) {
+      setPhotoError(`Limite de ${MAX_IMAGES} photos au total par rapport.`);
+      return;
+    }
+    setPhotoError('');
+    const prepared: PhotoAsset[] = [];
+    try {
+      for (const file of selected) prepared.push(await preparePhoto(file));
+      const allPhotos = [...report.coverPhotos, ...report.photos, ...report.testimonials.flatMap((testimonial) => testimonial.photos), ...prepared];
+      if (allPhotos.reduce((sum, photo) => sum + photo.bytes.byteLength, 0) > MAX_TOTAL_PHOTO_BYTES) {
+        prepared.forEach((photo) => URL.revokeObjectURL(photo.previewUrl!));
+        setPhotoError('Les photos compressées dépassent 18 Mo au total. Retirez-en quelques-unes ou choisissez des images plus petites.');
+        return;
+      }
+      prepared.forEach((photo) => trackUrl(photo.previewUrl));
+      setReport((current) => ({ ...current, testimonials: current.testimonials.map((testimonial, index) => index === testimonialIndex ? { ...testimonial, photos: [...testimonial.photos, ...prepared] } : testimonial) }));
+    } catch (error) {
+      prepared.forEach((photo) => { if (photo.previewUrl) releaseUrl(photo.previewUrl); });
+      setPhotoError(error instanceof Error ? error.message : 'Une image n’a pas pu être lue.');
+    }
+  };
+
+  const replaceTestimonialPhoto = async (testimonialIndex: number, photoIndex: number, file: File | undefined) => {
+    if (!file) return;
+    setPhotoError('');
+    try {
+      const replacement = await preparePhoto(file);
+      const currentPhoto = report.testimonials[testimonialIndex]?.photos[photoIndex];
+      const currentBytes = [...report.coverPhotos, ...report.photos, ...report.testimonials.flatMap((testimonial) => testimonial.photos)].reduce((sum, photo) => sum + photo.bytes.byteLength, 0);
+      if (currentBytes - (currentPhoto?.bytes.byteLength ?? 0) + replacement.bytes.byteLength > MAX_TOTAL_PHOTO_BYTES) {
+        URL.revokeObjectURL(replacement.previewUrl!);
+        setPhotoError('Les photos compressées dépassent 18 Mo au total. Choisissez une image plus petite.');
+        return;
+      }
+      trackUrl(replacement.previewUrl);
+      setReport((current) => ({ ...current, testimonials: current.testimonials.map((testimonial, index) => index === testimonialIndex ? { ...testimonial, photos: testimonial.photos.map((photo, indexPhoto) => {
+        if (indexPhoto !== photoIndex) return photo;
+        if (photo.previewUrl) releaseUrl(photo.previewUrl);
+        return replacement;
+      }) } : testimonial) }));
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : 'Cette image n’a pas pu être remplacée.');
+    }
+  };
+
+  const removeTestimonialPhoto = (testimonialIndex: number, photoIndex: number) => setReport((current) => ({
+    ...current,
+    testimonials: current.testimonials.map((testimonial, index) => index === testimonialIndex ? { ...testimonial, photos: testimonial.photos.filter((photo, indexPhoto) => {
+      if (indexPhoto !== photoIndex) return true;
+      if (photo.previewUrl) releaseUrl(photo.previewUrl);
+      return false;
+    }) } : testimonial),
+  }));
 
   const removePhoto = (group: PhotoGroup, index: number) => {
     setReport((current) => {
@@ -372,6 +430,25 @@ export default function ReportForm() {
             </label>)}
           </div>
           {rubric.id === 'testimonials' && <div className="testimonial-audio">
+            <h3>Témoignages et photos <span className="optional">facultatif</span></h3>
+            <p className="field-help">Ajoutez chaque témoignage séparément et joignez plusieurs photos à chacun. Les photos apparaîtront dans le PDF juste après leur témoignage. Limite combinée : {MAX_IMAGES} photos et 18 Mo après compression.</p>
+            {report.testimonials.map((testimonial, testimonialIndex) => <section className="testimonial-card" key={testimonialIndex}>
+              <div className="section-heading"><strong>Témoignage {testimonialIndex + 1}</strong><button type="button" className="text-button danger-text" onClick={() => {
+                testimonial.photos.forEach((photo) => releaseUrl(photo.previewUrl));
+                setReport((current) => ({ ...current, testimonials: current.testimonials.filter((_, index) => index !== testimonialIndex) }));
+              }}>Supprimer le témoignage</button></div>
+              <label className="field full-field"><span>Texte du témoignage</span><textarea rows={4} value={testimonial.text} onChange={(event) => setReport((current) => ({ ...current, testimonials: current.testimonials.map((entry, index) => index === testimonialIndex ? { ...entry, text: event.target.value } : entry) }))} /></label>
+              <label className="file-picker"><span>Ajouter des photos à ce témoignage</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => { void addTestimonialPhotos(testimonialIndex, event.currentTarget.files); event.currentTarget.value = ''; }} /></label>
+              {testimonial.photos.length > 0 && <div className="photo-editor-grid">{testimonial.photos.map((photo, photoIndex) => <figure className="photo-editor-card" key={`${photo.name}-${photoIndex}`}>
+                {photo.previewUrl && <img src={photo.previewUrl} alt={`Aperçu de ${photo.name}`} />}
+                <figcaption><strong>{photo.name}</strong><label>Légende facultative<input value={photo.caption} onChange={(event) => setReport((current) => ({ ...current, testimonials: current.testimonials.map((entry, index) => index === testimonialIndex ? { ...entry, photos: entry.photos.map((item, itemIndex) => itemIndex === photoIndex ? { ...item, caption: event.target.value } : item) } : entry) }))} /></label>
+                  <label className="file-picker"><span>Remplacer la photo</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { void replaceTestimonialPhoto(testimonialIndex, photoIndex, event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} /></label>
+                  <button type="button" className="text-button danger-text" onClick={() => removeTestimonialPhoto(testimonialIndex, photoIndex)}>Supprimer la photo</button>
+                </figcaption>
+              </figure>)}</div>}
+            </section>)}
+            <button type="button" className="button button-light" onClick={() => setReport((current) => ({ ...current, testimonials: [...current.testimonials, { text: '', photos: [] }] }))}>Ajouter un témoignage</button>
+            {photoError && <p className="error-message" role="alert">{photoError}</p>}
             <h3>Enregistrement audio <span className="optional">facultatif</span></h3>
             <p className="field-help">Importez un enregistrement AAC, M4A, MP3, OGG, WAV ou WebM (25 Mo maximum). Il sera joint au PDF. Pour le récupérer, téléchargez le PDF et ouvrez sa liste de pièces jointes dans un lecteur compatible.</p>
             <label className="file-picker"><span>{report.testimonialAudio ? 'Remplacer l’enregistrement' : 'Importer un enregistrement'}</span><input type="file" accept="audio/*,.aac,.m4a,.mp3,.ogg,.wav,.webm" onChange={(event) => { void chooseTestimonialAudio(event.target.files?.[0]); event.currentTarget.value = ''; }} /></label>

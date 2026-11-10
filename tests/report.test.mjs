@@ -16,6 +16,7 @@ test('le modèle institutionnel conserve les rubriques et leur ordre', () => {
   ]);
   assert.deepEqual(REPORT_RUBRICS.find((rubric) => rubric.id === 'headcount')?.fields.map((field) => field.key), ['participants']);
   assert.ok(!Object.hasOwn(EMPTY_REPORT, 'participation'));
+  assert.deepEqual(EMPTY_REPORT.testimonials, []);
   assert.deepEqual(REPORT_RUBRICS[0].fields.slice(0, 5).map((field) => field.label), ['Titre du rapport / activité', 'Église, communauté, paroisse ou service', 'Thème de l’activité', 'Date de l’activité', 'Lieu']);
 });
 

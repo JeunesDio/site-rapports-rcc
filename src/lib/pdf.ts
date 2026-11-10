@@ -276,9 +276,26 @@ export async function buildReportPdf(report: ReportDraft, branding: PdfBranding 
   for (const rubric of REPORT_RUBRICS.filter((entry) => entry.id !== 'general')) {
     const fields = rubric.fields.map((field) => ({ field, value: fieldValue(report, field.key) })).filter(({ value }) => value);
     const audioTestimonial = rubric.id === 'testimonials' ? report.testimonialAudio : null;
-    if (!fields.length && !audioTestimonial) continue;
+    const testimonials = rubric.id === 'testimonials' ? (report.testimonials ?? []).filter((testimonial) => testimonial.text.trim() || testimonial.photos.length) : [];
+    if (!fields.length && !audioTestimonial && !testimonials.length) continue;
     drawSectionTitle(rubric.title);
     for (const { field, value } of fields) drawField(field.label, value);
+    for (const [testimonialIndex, testimonial] of testimonials.entries()) {
+      drawParagraph(`Témoignage ${testimonialIndex + 1}`, bold, 8.8, GOLD);
+      if (testimonial.text.trim()) drawParagraph(testimonial.text.trim(), regular, 10.2, INK);
+      for (const photo of testimonial.photos) {
+        const embedded = await embedImage(document, photo);
+        const maxWidth = PAGE_WIDTH - MARGIN * 2;
+        const dimensions = fit(embedded, 0, 0, maxWidth, 205);
+        const captionLines = photo.caption.trim() ? wrap(photo.caption.trim(), 8.7, regular, maxWidth) : [];
+        ensureSpace(dimensions.height + 18 + captionLines.length * 14);
+        page!.drawImage(embedded, fit(embedded, MARGIN, y - dimensions.height, maxWidth, dimensions.height));
+        y -= dimensions.height + 10;
+        if (captionLines.length) drawParagraph(photo.caption.trim(), regular, 8.7, MUTED);
+        y -= 8;
+      }
+      y -= 5;
+    }
     if (audioTestimonial) drawField('Enregistrement audio joint au PDF', audioTestimonial.name);
   }
 
