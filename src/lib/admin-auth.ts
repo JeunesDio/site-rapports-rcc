@@ -36,6 +36,10 @@ export function hasAdminCredential(): boolean {
   return readCredential() !== null;
 }
 
+export function getAdminIdentifier(): string {
+  return readCredential()?.username ?? '';
+}
+
 export function isAdminSessionValid(now = Date.now()): boolean {
   try {
     const session = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as Partial<Session> | null;
@@ -83,6 +87,17 @@ export async function updateAdminPassword(currentPassword: string, nextPassword:
   const current = await derivePassword(currentPassword, decodeHex(credential.salt), credential.iterations);
   if (encodeHex(current) !== credential.digest) throw new Error('Le mot de passe actuel est incorrect.');
   await saveCredential(credential.username, nextPassword);
+}
+
+export async function updateAdminEmail(currentPassword: string, nextEmail: string): Promise<void> {
+  const credential = readCredential();
+  if (!credential) throw new Error('Aucun compte administrateur n’est configuré.');
+  const email = nextEmail.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Saisissez une adresse e-mail valide.');
+  const current = await derivePassword(currentPassword, decodeHex(credential.salt), credential.iterations);
+  if (encodeHex(current) !== credential.digest) throw new Error('Le mot de passe actuel est incorrect.');
+  localStorage.setItem(CREDENTIAL_KEY, JSON.stringify({ ...credential, username: email }));
+  startSession(email);
 }
 
 export function signOutAdmin(): void {

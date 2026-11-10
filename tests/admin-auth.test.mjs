@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { afterEach, beforeEach } from 'node:test';
-import { createAdminCredential, hasAdminCredential, isAdminSessionValid, signInAdmin, signOutAdmin, updateAdminPassword } from '../src/lib/admin-auth.ts';
+import { createAdminCredential, getAdminIdentifier, hasAdminCredential, isAdminSessionValid, signInAdmin, signOutAdmin, updateAdminEmail, updateAdminPassword } from '../src/lib/admin-auth.ts';
 
 const values = new Map();
 const storage = {
@@ -34,6 +34,17 @@ test('le mot de passe administrateur peut être modifié après vérification du
   signOutAdmin();
   assert.equal(await signInAdmin('admin', 'ancien mot de passe sécurisé'), false);
   assert.equal(await signInAdmin('admin', 'nouveau mot de passe sécurisé'), true);
+});
+
+test('l’adresse e-mail de connexion peut être changée après vérification du mot de passe', async () => {
+  await createAdminCredential('ancienne@example.com', 'mot de passe administrateur fort');
+  await assert.rejects(updateAdminEmail('mot de passe erroné', 'nouvelle@example.com'));
+  await assert.rejects(updateAdminEmail('mot de passe administrateur fort', 'adresse invalide'));
+  await updateAdminEmail('mot de passe administrateur fort', 'Nouvelle@Example.com');
+  assert.equal(getAdminIdentifier(), 'nouvelle@example.com');
+  signOutAdmin();
+  assert.equal(await signInAdmin('ancienne@example.com', 'mot de passe administrateur fort'), false);
+  assert.equal(await signInAdmin('NOUVELLE@example.com', 'mot de passe administrateur fort'), true);
 });
 
 test('la configuration refuse un identifiant trop court ou un mot de passe trop faible', async () => {

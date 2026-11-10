@@ -38,6 +38,16 @@ test('chaque témoignage permet de prévisualiser, remplacer et supprimer ses ph
   assert.match(form, /removeTestimonialPhoto/);
 });
 
+test('le tableau de bord propose de remplacer l’adresse de connexion après confirmation du mot de passe', () => {
+  const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
+  const auth = readFileSync(new URL('../src/lib/admin-auth.ts', import.meta.url), 'utf8');
+  assert.match(app, /Modifier l’adresse e-mail/);
+  assert.match(app, /type="email"/);
+  assert.match(app, /updateAdminEmail\(emailPassword, newEmail\)/);
+  assert.match(app, /Aucune confirmation par e-mail n’est envoyée/);
+  assert.match(auth, /export async function updateAdminEmail/);
+});
+
 test('la liste de rapports générée ne contient aucune donnée fictive', () => {
   const data = JSON.parse(readFileSync(new URL('../src/data/reports.json', import.meta.url), 'utf8'));
   assert.deepEqual(data, []);

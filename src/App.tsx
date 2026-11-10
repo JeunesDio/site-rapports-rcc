@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import reportsData from './data/reports.json';
 import ReportForm from './components/report-form';
-import { createAdminCredential, hasAdminCredential, isAdminSessionValid, signInAdmin, signOutAdmin, updateAdminPassword } from './lib/admin-auth';
+import { createAdminCredential, getAdminIdentifier, hasAdminCredential, isAdminSessionValid, signInAdmin, signOutAdmin, updateAdminEmail, updateAdminPassword } from './lib/admin-auth';
 import { validatePublishedReports, type PublishedReport } from './lib/published-reports';
 import { publicAsset, reportPdfUrl } from './lib/site';
 import { BRANDING } from './data/branding';
@@ -104,6 +104,11 @@ function AdminAccess({ authenticated, onAuthChange, createFlow }: { authenticate
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const [adminIdentifier, setAdminIdentifier] = useState(getAdminIdentifier);
+  const [emailPassword, setEmailPassword] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -131,6 +136,17 @@ function AdminAccess({ authenticated, onAuthChange, createFlow }: { authenticate
     } catch (problem) { setError(problem instanceof Error ? problem.message : 'Le mot de passe n’a pas pu être modifié.'); }
   };
 
+  const changeEmail = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); setEmailError(''); setEmailMessage('');
+    try {
+      await updateAdminEmail(emailPassword, newEmail);
+      const updatedIdentifier = getAdminIdentifier();
+      setAdminIdentifier(updatedIdentifier);
+      setEmailPassword(''); setNewEmail('');
+      setEmailMessage(`L’identifiant de connexion est maintenant ${updatedIdentifier}.`);
+    } catch (problem) { setEmailError(problem instanceof Error ? problem.message : 'L’adresse e-mail n’a pas pu être modifiée.'); }
+  };
+
   const logout = () => { signOutAdmin(); onAuthChange(false); setMessage(''); window.location.hash = '/'; };
 
   if (authenticated) return <main className="content-section page-content form-page admin-page">
@@ -144,6 +160,16 @@ function AdminAccess({ authenticated, onAuthChange, createFlow }: { authenticate
       <label className="field"><span>Confirmer le nouveau mot de passe</span><input type="password" autoComplete="new-password" minLength={12} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required /></label>
       <div className="field"><span>&nbsp;</span><button className="button" type="submit">Modifier le mot de passe</button></div>
     </form>{message && <p className="success-message" role="status">{message}</p>}{error && <p className="error-message" role="alert">{error}</p>}</section>
+    <section className="admin-password-panel"><h2>Modifier l’adresse e-mail</h2>
+      <p>Identifiant actuel : <strong>{adminIdentifier}</strong></p>
+      <form className="form-grid" onSubmit={changeEmail}>
+        <label className="field"><span>Nouvelle adresse e-mail</span><input type="email" autoComplete="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} required /></label>
+        <label className="field"><span>Confirme avec ton mot de passe</span><input type="password" autoComplete="current-password" value={emailPassword} onChange={(event) => setEmailPassword(event.target.value)} required /></label>
+        <div className="field"><span>&nbsp;</span><button className="button" type="submit">Mettre à jour l’adresse</button></div>
+      </form>
+      <p className="field-help">Cette adresse deviendra l’identifiant utilisé pour te connecter sur ce navigateur. Aucune confirmation par e-mail n’est envoyée.</p>
+      {emailMessage && <p className="success-message" role="status">{emailMessage}</p>}{emailError && <p className="error-message" role="alert">{emailError}</p>}
+    </section>
   </main>;
 
   return <main className="content-section page-content form-page admin-page">
