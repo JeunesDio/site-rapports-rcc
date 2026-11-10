@@ -10,15 +10,18 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "test:pdf": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/pdf.test.mjs tests/report.test.mjs",
     "preview": "vite preview",
     "lint": "eslint src tests vite.config.ts",
     "typecheck": "tsc --noEmit",
-    "test:public": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/published-reports.test.mjs tests/pages.test.mjs",
+    "test:auth": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/admin-auth.test.mjs",
+    "test:public": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/published-reports.test.mjs tests/pages.test.mjs tests/admin-auth.test.mjs",
     "test:pages": "node --test tests/pages.test.mjs"
   },
   "dependencies": {
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "pdf-lib": "1.17.1"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
