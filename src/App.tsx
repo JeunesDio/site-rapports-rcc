@@ -21,7 +21,7 @@ function SiteHeader() {
       <img className="identity-logo identity-logo-secondary" src={renewalLogo} alt="Emblème du Renouveau Charismatique" />
     </a>
     <nav aria-label="Navigation principale">
-      <a href="#/">Accueil</a><a href="#/rapports">Rapports</a><a href="#/administration">Administration</a><a className="nav-action" href="#/nouveau">Créer un rapport</a>
+      <a href="#/">Accueil</a><a href="#/rapports">Rapports</a><a className="nav-action" href="#/nouveau">Créer un rapport</a>
     </nav>
   </header>;
 }

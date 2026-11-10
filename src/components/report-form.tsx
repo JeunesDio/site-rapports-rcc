@@ -381,7 +381,7 @@ export default function ReportForm({ onSignOut }: { onSignOut: () => void }) {
 
   return <main className="content-section page-content form-page">
     <a className="back-link" href="#/">← Accueil</a>
-    <div className="section-heading"><div className="eyebrow">Espace Administrateur</div><button className="text-button danger-text" type="button" onClick={onSignOut}>Se déconnecter</button></div>
+    <div className="section-heading"><div className="eyebrow">Préparation du rapport</div><div className="admin-actions"><a className="text-action" href="#/administration">Paramètres du compte</a><button className="text-button danger-text" type="button" onClick={onSignOut}>Se déconnecter</button></div></div>
     <h1>Préparer un rapport d’activité</h1>
     <p className="page-intro">Renseignez les informations essentielles, choisissez les visuels, puis prévisualisez le PDF généré et téléchargé dans votre navigateur.</p>
     <div className="privacy-note"><strong>Traitement local</strong><span>Le rapport, les photos et l’audio sont traités dans ce navigateur et ne sont pas envoyés à un serveur. Téléchargez le PDF et sa fiche JSON, puis publiez-les manuellement sur GitHub.</span></div>

@@ -49,6 +49,14 @@ test('le tableau de bord propose de remplacer l’adresse de connexion après co
   assert.match(auth, /export async function updateAdminEmail/);
 });
 
+test('le menu public ne montre pas le titre Administration, et les paramètres restent dans la zone connectée', () => {
+  const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
+  const form = readFileSync(new URL('../src/components/report-form.tsx', import.meta.url), 'utf8');
+  assert.match(app, /href="#\/nouveau">Créer un rapport/);
+  assert.doesNotMatch(app, /href="#\/administration">Administration/);
+  assert.match(form, /href="#\/administration">Paramètres du compte/);
+});
+
 test('la liste de rapports générée ne contient aucune donnée fictive', () => {
   const data = JSON.parse(readFileSync(new URL('../src/data/reports.json', import.meta.url), 'utf8'));
   assert.deepEqual(data, []);
