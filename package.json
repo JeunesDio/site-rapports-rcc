@@ -13,11 +13,10 @@
     "preview": "vite preview",
     "lint": "eslint src tests vite.config.ts",
     "typecheck": "tsc --noEmit",
-    "test:pdf": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/pdf.test.mjs tests/report.test.mjs",
+    "test:public": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/published-reports.test.mjs tests/pages.test.mjs",
     "test:pages": "node --test tests/pages.test.mjs"
   },
   "dependencies": {
-    "pdf-lib": "1.17.1",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

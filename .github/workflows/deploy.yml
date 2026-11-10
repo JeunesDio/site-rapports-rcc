@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Check code and reports
-        run: pnpm lint && pnpm typecheck && pnpm test:pdf && pnpm build && pnpm test:pages
+        run: pnpm lint && pnpm typecheck && pnpm build && pnpm test:public
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d1 # v6
       - name: Upload static site

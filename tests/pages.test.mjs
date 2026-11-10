@@ -10,6 +10,8 @@ test('le build GitHub Pages utilise le préfixe du dépôt et embarque les logos
     .map((name) => readFileSync(new URL(`../dist/assets/${name}`, import.meta.url), 'utf8'))
     .join('\n');
   assert.match(bundle, /site-rapports-rcc\//, 'les chemins générés utilisent la base du dépôt');
+  assert.match(bundle, /site-rapports-rcc-admin/, 'le lien d’administration ouvre le dépôt privé');
+  assert.doesNotMatch(bundle, /Préparer un rapport d’activité|Témoignages et photos/, 'le formulaire et le générateur ne sont pas inclus dans le site public');
   assert.ok(existsSync(new URL('../dist/identite/archidiocese-cotonou.jpg', import.meta.url)));
   assert.ok(existsSync(new URL('../dist/identite/renouveau-charismatique.jpg', import.meta.url)));
 });

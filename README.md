@@ -1,20 +1,19 @@
 # Rapports d’activités — Service Jeune RCCC de Cotonou
 
-Application statique, sans serveur ni base distante. Le formulaire crée et prévisualise le rapport dans le navigateur; le PDF est téléchargé localement. Les rapports ne deviennent publics qu’après une revue humaine et leur ajout au dépôt GitHub.
+Site public statique, sans serveur ni base distante. Il présente l’archive et les PDF publiés. L’outil de création est maintenu dans le dépôt privé `JeunesDio/site-rapports-rcc-admin` et s’ouvre dans un Codespace privé.
 
 Le modèle de rapport est une création institutionnelle originale. Il ne s’agit pas d’un formulaire officiel de l’INH.
 
 ## Organisation
 
-- `src/components/report-form.tsx` : formulaire local, sélection/compression des photos, aperçu PDF et téléchargements.
-- `src/lib/report.ts` : modèle de données, validations et rubriques éditoriales.
-- `src/lib/pdf.ts` : génération PDF côté navigateur, avec logos, pagination, sections optionnelles et photos intégrées.
+- `src/App.tsx` : accueil public, archive et pages des rapports publiés.
+- `src/lib/published-reports.ts` : validation de l’index public.
 - `src/data/branding.ts` : mentions institutionnelles et chemins des logos réutilisés dans le site et les PDF.
 - `src/data/reports.json` : index versionné des rapports publics. Il est vide au départ; aucune activité fictive n’est publiée.
 - `public/rapports/` : PDF publiés.
 - `public/identite/` : les deux logos fournis par les responsables.
 
-Les rubriques et leur ordre sont centralisés dans `REPORT_RUBRICS`. Pour modifier le modèle, adaptez cette configuration et ses tests; le moteur PDF parcourt les mêmes rubriques que le formulaire. Les champs vides sont omis du PDF.
+Le générateur n’est pas inclus dans le build public GitHub Pages. Il reste disponible dans le dépôt privé pour le Codespace administrateur.
 
 ## Modèle institutionnel
 
@@ -26,18 +25,15 @@ L’en-tête du PDF affiche les trois mentions demandées, dans cet ordre :
 
 Le logo de l’Archidiocèse est placé à gauche, celui du Renouveau à droite. Les images sont ajustées proportionnellement, sans cadre ajouté. Les fichiers fournis sont des JPEG à fond blanc incorporé; un futur logo PNG avec transparence sera aussi pris en charge si son chemin `.png` est déclaré dans `src/data/branding.ts`.
 
-## Créer un rapport
+## Site public et outil de création privé
 
-```sh
-pnpm install --frozen-lockfile
-pnpm dev
-```
+Ce dépôt public sert l’accueil, l’archive et les PDF publiés sur GitHub Pages. Le formulaire de création n’est pas inclus dans le site public. Le bouton **Créer un rapport** mène au dépôt privé `JeunesDio/site-rapports-rcc-admin`, accessible après connexion au compte GitHub autorisé.
 
-Ouvrez l’adresse locale affichée par Vite, puis choisissez **Créer un rapport**. Seuls l’intitulé et la date sont obligatoires; les rubriques sans contenu sont omises. Les liens d’album Google Photos sont facultatifs et doivent être des liens HTTPS partagés avec les visiteurs visés. Le site ne peut pas vérifier les droits configurés sur Google Photos.
+L’outil privé s’ouvre dans GitHub Codespaces. Le port de l’application doit rester **Private** (valeur par défaut) ; GitHub authentifie l’accès au port. Le site public reste consultable sans connexion.
 
-Les photos locales sont facultatives. JPEG, PNG et WebP sont redimensionnés et compressés dans le navigateur avant leur intégration au PDF; jusqu’à 12 images et 18 Mo après compression sont acceptés, toutes rubriques confondues. Chaque témoignage peut contenir plusieurs photos; elles sont prévisualisées et peuvent être remplacées ou supprimées. Dans le PDF, elles suivent le témoignage correspondant et peuvent porter une légende. Les images ne sont pas téléversées. Le PDF et une fiche JSON prête à intégrer sont téléchargés séparément.
+Dans l’outil privé, seuls l’intitulé et la date sont obligatoires. Jusqu’à 12 photos et 18 Mo après compression sont acceptés, toutes rubriques confondues. Les photos de témoignage sont prévisualisées, remplaçables et supprimables, puis intégrées à la section correspondante du PDF. Les brouillons et photos restent dans le navigateur ; ils ne sont pas téléversés vers une base ou un stockage distant.
 
-La page ne conserve pas les brouillons après fermeture ou rechargement. Elle n’a pas d’authentification et ne doit pas servir à préparer un document confidentiel. Aucun rapport ni témoignage n’est envoyé ou publié automatiquement.
+Codespaces protège l’accès à l’instance de création. Le code a toutefois figuré dans l’historique public de ce dépôt ; il ne doit pas être considéré comme secret et peut encore être récupéré pour être exécuté ailleurs. La session du port privé expire et peut demander une nouvelle authentification.
 
 ## Publier un rapport
 
@@ -59,12 +55,11 @@ Vite est configuré avec la base `/site-rapports-rcc/`, adaptée à l’adresse 
 ```sh
 pnpm lint
 pnpm typecheck
-pnpm test:pdf
 pnpm build
-pnpm test:pages
+pnpm test:public
 ```
 
-Les tests vérifient les rubriques et leur ordre, les champs obligatoires, les liens Google Photos, la création d’un PDF sans photo et avec plusieurs photos, les textes longs accentués, ainsi que le préfixe et les fichiers du build GitHub Pages.
+Les tests du dépôt public vérifient les métadonnées publiées et le contenu du build GitHub Pages. Les tests PDF et formulaire se trouvent dans le dépôt privé de l’outil.
 
 ## Anciennes données Supabase
 

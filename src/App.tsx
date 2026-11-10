@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import reportsData from './data/reports.json';
-import ReportForm from './components/report-form';
-import { validatePublishedReports, type PublishedReport } from './lib/report';
+import { validatePublishedReports, type PublishedReport } from './lib/published-reports';
 import { publicAsset, reportPdfUrl } from './lib/site';
 import { BRANDING } from './data/branding';
 
 const reports = validatePublishedReports(reportsData);
 const diocesanLogo = publicAsset(BRANDING.logos.archdiocese);
 const renewalLogo = publicAsset(BRANDING.logos.renewal);
+const privateAdminRepository = 'https://codespaces.new/JeunesDio/site-rapports-rcc-admin';
 
 function routeFromHash() {
   return window.location.hash.replace(/^#/, '') || '/';
@@ -21,7 +21,7 @@ function SiteHeader() {
       <img className="identity-logo identity-logo-secondary" src={renewalLogo} alt="Emblème du Renouveau Charismatique" />
     </a>
     <nav aria-label="Navigation principale">
-      <a href="#/">Accueil</a><a href="#/rapports">Rapports</a><a className="nav-action" href="#/nouveau">Créer un rapport</a>
+      <a href="#/">Accueil</a><a href="#/rapports">Rapports</a><a className="nav-action" href={privateAdminRepository}>Créer un rapport</a>
     </nav>
   </header>;
 }
@@ -48,7 +48,7 @@ function HomePage() {
       <div className="eyebrow">SERVICE JEUNE RCCC · COTONOU</div>
       <h1>Servir, témoigner,<br /><em>faire grandir la foi.</em></h1>
       <p>Retrouvez les comptes rendus des activités du Service Jeune du Renouveau Charismatique Catholique de Cotonou.</p>
-      <div className="hero-actions"><a className="button" href="#/rapports">Consulter les rapports</a><a className="button button-light" href="#/nouveau">Créer un rapport</a></div>
+      <div className="hero-actions"><a className="button" href="#/rapports">Consulter les rapports</a><a className="button button-light" href={privateAdminRepository}>Créer un rapport</a></div>
       <div className="hero-note">Chaque rapport est relu par un responsable avant sa publication sur ce site.</div>
     </section>
     <section className="content-section">
@@ -81,7 +81,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', updateRoute);
   }, []);
   let content;
-  if (route === '/nouveau') content = <ReportForm />;
+  if (route === '/nouveau') content = <main className="content-section page-content"><div className="eyebrow">Accès administrateur</div><h1>Connexion GitHub requise</h1><p className="page-intro">L’outil de création est accessible dans l’espace privé du compte autorisé.</p><a className="button" href={privateAdminRepository}>Ouvrir l’espace de création</a></main>;
   else if (route === '/rapports') content = <ReportsPage />;
   else if (route.startsWith('/rapport/')) {
     const id = decodeURIComponent(route.slice('/rapport/'.length));
