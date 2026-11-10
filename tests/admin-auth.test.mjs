@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { afterEach, beforeEach } from 'node:test';
-import { createAdminCredential, getAdminIdentifier, hasAdminCredential, isAdminSessionValid, signInAdmin, signOutAdmin, updateAdminEmail, updateAdminPassword } from '../src/lib/admin-auth.ts';
+import { createAdminCredential, hasAdminCredential, isAdminSessionValid, signInAdmin, signOutAdmin, updateAdminEmail, updateAdminPassword } from '../src/lib/admin-auth.ts';
 
 const values = new Map();
 const storage = {
@@ -41,10 +41,23 @@ test('l’adresse e-mail de connexion peut être changée après vérification d
   await assert.rejects(updateAdminEmail('mot de passe erroné', 'nouvelle@example.com'));
   await assert.rejects(updateAdminEmail('mot de passe administrateur fort', 'adresse invalide'));
   await updateAdminEmail('mot de passe administrateur fort', 'Nouvelle@Example.com');
-  assert.equal(getAdminIdentifier(), 'nouvelle@example.com');
+  assert.doesNotMatch(values.get('rccc-admin-credential-v1'), /nouvelle@example\.com/i);
+  assert.doesNotMatch(values.get('rccc-admin-session-v1'), /nouvelle@example\.com/i);
   signOutAdmin();
   assert.equal(await signInAdmin('ancienne@example.com', 'mot de passe administrateur fort'), false);
   assert.equal(await signInAdmin('NOUVELLE@example.com', 'mot de passe administrateur fort'), true);
+});
+
+test('les anciens identifiants sont convertis sans conserver l’adresse en clair après connexion', async () => {
+  await createAdminCredential('admin@example.com', 'mot de passe administrateur fort');
+  const credential = JSON.parse(values.get('rccc-admin-credential-v1'));
+  credential.username = 'admin@example.com';
+  delete credential.identifierSalt;
+  delete credential.identifierDigest;
+  values.set('rccc-admin-credential-v1', JSON.stringify(credential));
+  signOutAdmin();
+  assert.equal(await signInAdmin('ADMIN@example.com', 'mot de passe administrateur fort'), true);
+  assert.doesNotMatch(values.get('rccc-admin-credential-v1'), /admin@example\.com/i);
 });
 
 test('la configuration refuse un identifiant trop court ou un mot de passe trop faible', async () => {

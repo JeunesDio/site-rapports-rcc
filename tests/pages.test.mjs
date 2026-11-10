@@ -45,6 +45,7 @@ test('le tableau de bord propose de remplacer l’adresse de connexion après co
   assert.match(app, /type="email"/);
   assert.match(app, /updateAdminEmail\(emailPassword, newEmail\)/);
   assert.match(app, /Aucune confirmation par e-mail n’est envoyée/);
+  assert.doesNotMatch(app, /Identifiant actuel|updatedIdentifier/);
   assert.match(auth, /export async function updateAdminEmail/);
 });
 
